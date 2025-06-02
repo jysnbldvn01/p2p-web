@@ -1,0 +1,38 @@
+.profile-page {
+  padding: 2rem;
+}
+
+.profile-title {
+  font-size: 24px;
+  margin-bottom: 1rem;
+}
+
+.profile-box {
+  background: #f9f9f9;
+  padding: 1.5rem;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  max-width: 500px;
+}
+
+.profile-box form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-box input[type="text"],
+.profile-box input[type="email"],
+.profile-box input[type="file"] {
+  padding: 8px;
+  border: 1px solid #aaa;
+  border-radius: 5px;
+}
+
+.profile-box button {
+  background: #2c3e50;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+}

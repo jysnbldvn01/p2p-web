@@ -16,26 +16,39 @@ export default function Login() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.email || !form.password) {
-      setError('Please fill in all fields');
-      return;
-    }
-    
-    setLoading(true);
-    
-    try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', form);
-      localStorage.setItem('token', res.data.token);
-      setLoading(false);
-      alert('Login successful!');
-      navigate('/home');
-    } catch (err) {
-      setLoading(false);
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
-    }
-  };
+  e.preventDefault();
+  if (!form.email || !form.password) {
+    setError('Please fill in all fields');
+    return;
+  }
 
+  setLoading(true);
+
+  try {
+    const res = await axios.post('http://localhost:5000/api/auth/login', form);
+    const token = res.data.token;
+    localStorage.setItem('token', token);
+
+    // ✅ Check if profile is already set up
+    const profileRes = await axios.get('http://localhost:5000/api/profile', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    setLoading(false);
+    alert('Login successful!');
+
+    // ✅ Redirect based on profile
+    if (profileRes.data && profileRes.data.username) {
+      navigate('/home');
+    } else {
+      navigate('/setup-account');
+    }
+
+  } catch (err) {
+    setLoading(false);
+    setError(err.response?.data?.message || 'Login failed. Please try again.');
+  }
+};
   return (
     <div className="auth-container">
       <div className="auth-card">

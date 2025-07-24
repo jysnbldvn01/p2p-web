@@ -119,4 +119,80 @@ router.post('/avatar', authenticateToken, upload.single('avatar'), (req, res) =>
   });
 });
 
+router.get('/others', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ message: 'No token provided' });
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) return res.status(403).json({ message: 'Invalid token' });
+
+    const sql = `
+      SELECT user_id AS id, username, skills, bio, contact_number, avatar 
+      FROM user_profiles 
+      WHERE user_id != ?
+    `;
+    db.query(sql, [decoded.id], (err, result) => {
+      if (err) return res.status(500).json({ error: err });
+      res.json(result);
+    });
+  });
+});
+
+
+
+//-------------------Notification ---------------------------//
+router.post('/', (req, res) => {
+  const { sender_id, receiver_id, message } = req.body;
+
+  const sql = `
+    INSERT INTO notifications (sender_id, receiver_id, message)
+    VALUES (?, ?, ?)
+  `;
+  db.query(sql, [sender_id, receiver_id, message], (err) => {
+    if (err) return res.status(500).json({ error: 'DB error' });
+    res.json({ message: 'Notification sent' });
+  });
+});
+
+router.get('/', (req, res) => {
+  const userId = req.user.id;
+
+  const sql = `
+    SELECT n.*, u.name AS sender_name
+    FROM notifications n
+    JOIN users u ON u.id = n.sender_id
+    WHERE n.receiver_id = ? AND n.is_archived = FALSE
+    ORDER BY n.created_at DESC
+  `;
+  db.query(sql, [userId], (err, results) => {
+    if (err) return res.status(500).json({ error: 'DB error' });
+    res.json(results);
+  });
+});
+
+router.get('/archived', (req, res) => {
+  const userId = req.user.id;
+
+  const sql = `
+    SELECT n.*, u.name AS sender_name
+    FROM notifications n
+    JOIN users u ON u.id = n.sender_id
+    WHERE n.receiver_id = ? AND n.is_archived = TRUE
+    ORDER BY n.created_at DESC
+  `;
+  db.query(sql, [userId], (err, results) => {
+    if (err) return res.status(500).json({ error: 'DB error' });
+    res.json(results);
+  });
+});
+
+router.put('/:id/archive', (req, res) => {
+  const sql = `UPDATE notifications SET is_archived = TRUE WHERE id = ?`;
+  db.query(sql, [req.params.id], (err) => {
+    if (err) return res.status(500).json({ error: 'DB error' });
+    res.json({ message: 'Notification archived' });
+  });
+});
+//------------------- End Notification ---------------------------//
+
 module.exports = router;

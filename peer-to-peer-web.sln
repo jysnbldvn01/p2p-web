@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventDrivenApp", "EventDrivenApp\EventDrivenApp.csproj", "{8FF1D222-FA3C-1678-D5C2-C88086B71DFF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8FF1D222-FA3C-1678-D5C2-C88086B71DFF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8FF1D222-FA3C-1678-D5C2-C88086B71DFF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8FF1D222-FA3C-1678-D5C2-C88086B71DFF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8FF1D222-FA3C-1678-D5C2-C88086B71DFF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5D524DC8-842D-4C70-A2C9-D1DA5659E400}
+	EndGlobalSection
+EndGlobal

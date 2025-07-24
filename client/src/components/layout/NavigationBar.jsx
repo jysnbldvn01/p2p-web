@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { FiHome, FiUser, FiMessageSquare, FiBell, FiChevronLeft } from 'react-icons/fi';
+import { FiHome, FiUser, FiMessageSquare, FiBell, FiChevronRight } from 'react-icons/fi';
 import { RiLogoutCircleRLine } from 'react-icons/ri';
 import '../../css/sidebar.css';
 
@@ -38,7 +38,7 @@ const NavigationBar = () => {
         onClick={toggleSidebar}
         style={{ left: isCollapsed ? '80px' : '250px' }}
       >
-        <FiChevronLeft className={`toggle-icon ${isCollapsed ? '' : 'rotated'}`} />
+        <FiChevronRight className={`toggle-icon ${isCollapsed ? '' : 'rotated'}`} />
       </button>
 
       {/* Sidebar */}
@@ -64,7 +64,6 @@ const NavigationBar = () => {
           <NavLink to="/notifications" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
             <FiBell className="icon" />
             {!isCollapsed && <span>Notifications</span>}
-            <span className="notification-badge">3</span>
           </NavLink>
 
           <NavLink to="/profile" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>

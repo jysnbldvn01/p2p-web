@@ -1,0 +1,220 @@
+/* Main Container - Same as Profile */
+.notification-page {
+  display: flex;
+  justify-content: left;
+  padding: 2rem;
+  background: #ffffff;
+  min-height: 100vh;
+  padding-top: 0px;
+}
+
+/* White Box Container - Identical to Profile */
+.notification-container {
+  width: 100%;
+  max-width: 1000px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  padding-left: 20px;
+}
+
+/* Header - Same Styling as Profile */
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.notification-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #1e293b;
+}
+
+/* Search Bar - Matching Profile Inputs */
+.notification-search {
+  position: relative;
+  padding: 0 2rem;
+  margin: 1.5rem 0;
+}
+
+.notification-search input {
+  width: 50%;
+  padding: 0.8rem 1rem 0.8rem 40px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.notification-search input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: none;
+}
+
+.search-icon {
+  position: absolute;
+  left: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+}
+
+/* Tabs - Matching Profile Section Headers */
+.notification-tabs {
+  display: flex;
+  gap: 1rem;
+  padding: 0 2rem 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tab-button {
+  padding: 0.6rem 1.2rem;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.tab-button.active {
+  color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Notification List - Matching Profile Sections */
+.notification-list {
+  padding: 0 2rem 2rem;
+}
+
+.notification-card {
+  display: flex;
+  align-items: flex-start;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+  border-left: 4px solid #3b82f6;
+}
+
+.notification-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.notification-icon {
+  font-size: 1.25rem;
+  margin-right: 1.5rem;
+  padding: 0.75rem;
+  background-color: #f8fafc;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3b82f6;
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-content h4 {
+  margin: 0 0 0.5rem 0;
+  color: #1e293b;
+  font-size: 1rem;
+}
+
+.notification-content p {
+  margin: 0 0 0.5rem 0;
+  color: #475569;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.notification-time {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.archive-button {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 1.25rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  padding: 0.5rem;
+  margin-left: 1rem;
+}
+
+.archive-button:hover {
+  opacity: 1;
+}
+
+/* Empty State - Matching Profile Style */
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #64748b;
+}
+
+.empty-state p {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: #1e293b;
+}
+
+.empty-state span {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+/* Responsive Design - Same Breakpoints as Profile */
+@media (max-width: 768px) {
+  .notification-page {
+    padding: 1rem;
+  }
+  
+  .notification-container {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  .notification-header {
+    padding: 1rem 1.5rem;
+  }
+  
+  .notification-search,
+  .notification-tabs,
+  .notification-list {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+  .notification-card {
+    flex-direction: column;
+    padding: 1rem;
+  }
+  
+  .notification-icon {
+    margin-right: 0;
+    margin-bottom: 1rem;
+  }
+  
+  .archive-button {
+    align-self: flex-end;
+    margin-top: 1rem;
+  }
+}

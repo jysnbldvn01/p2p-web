@@ -1,22 +1,46 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FiUpload, FiUser, FiAward, FiFileText, FiCalendar, FiUsers, FiLink, FiPhone, FiSave } from 'react-icons/fi';
+import { FiUpload, FiUser, FiAward, FiFileText, FiCalendar, FiUsers, FiLink, FiPhone, FiSave, FiX } from 'react-icons/fi';
 import '../css/setup.css';
 
 const SetupAccount = () => {
   const [form, setForm] = useState({
     username: '',
-    skills: '',
     bio: '',
     birthday: '',
     gender: '',
     social_links: '',
-    contact_number: ''
+    contact_number: '',
+    role: 'Skill Learner',
+    year_level: ''
   });
+  const [selectedSubjects, setSelectedSubjects] = useState([]);
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const subjectOptions = [
+    'Entrepreneurial Management',
+    'Marketing Principles',
+    'Strategic Management',
+    'Feasibility Study',
+    'Operations Management',
+    'Human Resource Management',
+    'Financial Management',
+    'Business Ethics',
+    'E-Commerce',
+    'Accounting for Entrepreneurs'
+  ];
+
+  const yearLevels = [
+    'First Year',
+    'Second Year',
+    'Third Year',
+    'Fourth Year',
+    'Masteral Degree',
+    'Professor'
+  ];
 
   const navigate = useNavigate();
 
@@ -41,6 +65,18 @@ const SetupAccount = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleSubjectSelect = (e) => {
+    const value = e.target.value;
+    if (value && !selectedSubjects.includes(value)) {
+      setSelectedSubjects([...selectedSubjects, value]);
+    }
+    e.target.value = '';
+  };
+
+  const removeSubject = (subjectToRemove) => {
+    setSelectedSubjects(selectedSubjects.filter(subject => subject !== subjectToRemove));
+  };
+
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     setAvatarFile(file);
@@ -58,16 +94,25 @@ const SetupAccount = () => {
 
     try {
       const formData = new FormData();
-      for (const key in form) {
-        formData.append(key, form[key]);
+      const formWithSubjects = {
+        ...form,
+        subject: selectedSubjects.join(',')
+      };
+      
+      for (const key in formWithSubjects) {
+        if (formWithSubjects[key]) {
+          formData.append(key, formWithSubjects[key]);
+        }
       }
+      
       if (avatarFile) {
         formData.append('avatar', avatarFile);
       }
 
       await axios.post('http://localhost:5000/api/profile/setup', formData, {
         headers: {
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
         }
       });
 
@@ -157,19 +202,62 @@ const SetupAccount = () => {
                 </select>
               </div>
             </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Role</label>
+                <select name="role" value={form.role} onChange={handleChange}>
+                  <option value="Skill Learner">Skill Learner</option>
+                  <option value="Skill Sharer">Skill Sharer</option>
+                  <option value="Skill Sharer & Learner">Skill Sharer & Learner</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Year Level</label>
+                <select name="year_level" value={form.year_level} onChange={handleChange}>
+                  <option value="">Select Year Level</option>
+                  {yearLevels.map((level, index) => (
+                    <option key={index} value={level}>{level}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
 
           <div className="form-section">
-            <h2 className="section-title"><FiAward /> Skills & Expertise</h2>
+            <h2 className="section-title"><FiAward /> Subjects</h2>
             <div className="form-group">
-              <label>Your Skills (comma separated)</label>
-              <textarea 
-                name="skills" 
-                value={form.skills} 
-                onChange={handleChange} 
-                placeholder="e.g., JavaScript, Python, Design"
-                rows="3"
-              />
+              <label>Subjects</label>
+              <div className="subject-select-container">
+                <select 
+                  name="subject" 
+                  onChange={handleSubjectSelect}
+                  disabled={form.role === 'Skill Learner'}
+                >
+                  <option value="">Select Subject</option>
+                  {subjectOptions
+                    .filter(subject => !selectedSubjects.includes(subject))
+                    .map((subject, index) => (
+                      <option key={index} value={subject}>{subject}</option>
+                    ))
+                  }
+                </select>
+                <div className="selected-subjects">
+                  {selectedSubjects.map((subject, index) => (
+                    <span key={index} className="subject-tag">
+                      {subject}
+                      <button 
+                        type="button" 
+                        onClick={() => removeSubject(subject)}
+                        className="remove-subject"
+                      >
+                        <FiX size={14} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 

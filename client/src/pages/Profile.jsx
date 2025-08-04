@@ -9,15 +9,28 @@ const Profile = () => {
   const [showAvatarEdit, setShowAvatarEdit] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState('');
   const [avatarFile, setAvatarFile] = useState(null);
+  const [subjectCategories, setSubjectCategories] = useState([]);
+  const [selectedSubjects, setSelectedSubjects] = useState([]);
+  const [viewAs, setViewAs] = useState(false);
   const [form, setForm] = useState({
     username: '',
-    skills: '',
     bio: '',
     birthday: '',
     gender: '',
     social_links: '',
-    contact_number: ''
+    contact_number: '',
+    role: 'Skill Learner',
+    year_level: ''
   });
+
+  const yearLevels = [
+    'First Year',
+    'Second Year',
+    'Third Year',
+    'Fourth Year',
+    'Masteral Degree',
+    'Professor'
+  ];
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -27,7 +40,13 @@ const Profile = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         setProfile(res.data);
-        setForm(res.data);
+        const initialSubjects = res.data.subject ? res.data.subject.split(',') : [];
+        setSelectedSubjects(initialSubjects);
+        setForm({
+          ...res.data,
+          role: res.data.role || 'Skill Learner',
+          year_level: res.data.year_level || ''
+        });
         if (res.data.avatar) {
           setAvatarPreview(`http://localhost:5000/uploads/${res.data.avatar}`);
         }
@@ -35,11 +54,37 @@ const Profile = () => {
         console.error('Profile fetch error:', err);
       }
     };
+
+    const fetchSubjects = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/profile/subjects');
+        setSubjectCategories(res.data);
+      } catch (err) {
+        console.error('Error fetching subjects:', err);
+      }
+    };
+
     fetchProfile();
+    fetchSubjects();
   }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    if (e.target.name === 'role' && e.target.value === 'Skill Learner') {
+      setSelectedSubjects([]); // Clear subjects for learners
+    }
+  };
+
+  const handleSubjectSelect = (e) => {
+    const value = e.target.value;
+    if (value && !selectedSubjects.includes(value)) {
+      setSelectedSubjects([...selectedSubjects, value]);
+    }
+    e.target.value = '';
+  };
+
+  const removeSubject = (subjectToRemove) => {
+    setSelectedSubjects(selectedSubjects.filter(subject => subject !== subjectToRemove));
   };
 
   const handleAvatarChange = (e) => {
@@ -51,7 +96,6 @@ const Profile = () => {
   const handleAvatarSave = async () => {
     const token = localStorage.getItem('token');
     const formData = new FormData();
-    
     if (avatarFile) formData.append('avatar', avatarFile);
 
     try {
@@ -62,8 +106,6 @@ const Profile = () => {
         },
       });
       setAvatarFile(null);
-      alert('Avatar uploaded successfully!'); 
-
       setShowAvatarEdit(false);
       const res = await axios.get('http://localhost:5000/api/profile', {
         headers: { Authorization: `Bearer ${token}` },
@@ -78,17 +120,21 @@ const Profile = () => {
     e.preventDefault();
     const token = localStorage.getItem('token');
     const formData = new FormData();
-    
-    Object.keys(form).forEach(key => {
-      if (form[key]) formData.append(key, form[key]);
+    const formWithSubjects = {
+      ...form,
+      subject: form.role === 'Skill Learner' ? '' : selectedSubjects.join(',')
+    };
+
+    Object.keys(formWithSubjects).forEach(key => {
+      if (formWithSubjects[key]) formData.append(key, formWithSubjects[key]);
     });
+
     try {
       await axios.post('http://localhost:5000/api/profile/setup', formData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
       setEditMode(false);
       const res = await axios.get('http://localhost:5000/api/profile', {
         headers: { Authorization: `Bearer ${token}` },
@@ -105,113 +151,78 @@ const Profile = () => {
         <div className="settings-header">
           <h2>Account Settings</h2>
           <div className="header-actions">
+          <button 
+            className={`view-btn ${viewAs ? 'active' : ''}`}
+            onClick={() => setViewAs(!viewAs)}
+          >
+            View As Public
+          </button>
             {editMode ? (
               <>
-                <button className="cancel-btn" onClick={() => setEditMode(false)}>
-                  <FiX /> Cancel
-                </button>
-                <button className="save-btn" onClick={handleSave}>
-                  <FiSave /> Save Changes
-                </button>
+                <button className="cancel-btn" onClick={() => setEditMode(false)}><FiX /> Cancel</button>
+                <button className="save-btn" onClick={handleSave}><FiSave /> Save Changes</button>
               </>
             ) : (
-              <button className="edit-btn" onClick={() => setEditMode(true)}>
-                <FiEdit /> Edit Profile
-              </button>
+              <button className="edit-btn" onClick={() => setEditMode(true)}><FiEdit /> Edit Profile</button>
             )}
           </div>
         </div>
 
         <div className="settings-body">
           <div className="profile-header">
-          <div className="avatar-section">
-            <div 
-              className="avatar-wrapper"
-              onMouseEnter={() => setShowAvatarEdit(true)}
-              onMouseLeave={() => !avatarFile && setShowAvatarEdit(false)}
-            >
-              {avatarPreview ? (
-                <img src={avatarPreview} alt="Profile" className="avatar" />
-              ) : (
-                <div className="avatar-placeholder">
-                  <FiUser size={32} />
+            <div className="avatar-section">
+              <div
+                className="avatar-wrapper"
+                onMouseEnter={() => setShowAvatarEdit(true)}
+                onMouseLeave={() => !avatarFile && setShowAvatarEdit(false)}
+              >
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Profile" className="avatar" />
+                ) : (
+                  <div className="avatar-placeholder"><FiUser size={32} /></div>
+                )}
+                {showAvatarEdit && (
+                  <label className="avatar-edit-icon">
+                    <FiEdit className="edit-icon" />
+                    <input type="file" accept="image/*" onChange={handleAvatarChange} style={{ display: 'none' }} />
+                  </label>
+                )}
+              </div>
+              {avatarFile && (
+                <div className="avatar-actions">
+                  <button className="avatar-save-btn" onClick={handleAvatarSave}><FiSave /> Save</button>
+                  <button className="avatar-cancel-btn" onClick={() => {
+                    setAvatarFile(null);
+                    setAvatarPreview(profile?.avatar ? `http://localhost:5000/uploads/${profile.avatar}` : '');
+                  }}><FiX /> Cancel</button>
                 </div>
               )}
-              
-              {showAvatarEdit && (
-                <label className="avatar-edit-icon">
-                  <FiEdit className="edit-icon" />
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleAvatarChange} 
-                    style={{ display: 'none' }} 
-                  />
-                </label>
-              )}
             </div>
-            
-            {avatarFile && (
-              <div className="avatar-actions">
-                <button className="avatar-save-btn" onClick={handleAvatarSave}>
-                  <FiSave /> Save
-                </button>
-                <button className="avatar-cancel-btn" onClick={() => {
-                  if (profile?.avatar) {
-                    setAvatarPreview(`http://localhost:5000/uploads/${profile.avatar}`);
-                  } else {
-                    setAvatarPreview('');
-                  }
-                  setAvatarFile(null);
-                }}>
-                  <FiX /> Cancel
-                </button>
-              </div>
-              )}
-            </div>
-            
+
             <div className="profile-header-info">
               <h1>{profile?.username || 'User'}</h1>
               <p className="profile-title">{profile?.bio || 'No bio yet'}</p>
-              <div className="profile-stats">
-              </div>
             </div>
           </div>
 
-          {profile ? (
+          {profile && (
             <div className="profile-sections">
-              {/* Personal Info Section */}
               <div className="profile-section">
                 <h3><FiUser /> Personal Information</h3>
                 {editMode ? (
                   <div className="form-grid">
+                    {/* Standard editable fields */}
                     <div className="form-group">
                       <label>Username</label>
-                      <input 
-                        type="text" 
-                        name="username" 
-                        value={form.username} 
-                        onChange={handleChange} 
-                        required 
-                      />
+                      <input type="text" name="username" value={form.username} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>Bio</label>
-                      <textarea 
-                        name="bio" 
-                        value={form.bio} 
-                        onChange={handleChange} 
-                        rows="3" 
-                      />
+                      <textarea name="bio" value={form.bio} onChange={handleChange} rows="3" />
                     </div>
                     <div className="form-group">
                       <label>Birthday</label>
-                      <input 
-                        type="date" 
-                        name="birthday" 
-                        value={form.birthday?.split('T')[0]} 
-                        onChange={handleChange} 
-                      />
+                      <input type="date" name="birthday" value={form.birthday?.split('T')[0]} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>Gender</label>
@@ -220,6 +231,51 @@ const Profile = () => {
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
                         <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Role</label>
+                      <select name="role" value={form.role} onChange={handleChange}>
+                        <option value="Skill Learner">Skill Learner</option>
+                        <option value="Skill Sharer">Skill Sharer</option>
+                        <option value="Skill Sharer & Learner">Skill Sharer & Learner</option>
+                      </select>
+                    </div>
+
+                    {/* Conditional subject selection */}
+                    {(form.role !== 'Skill Learner') && (
+                      <div className="form-group">
+                        <label>Subjects</label>
+                        <select name="subject" onChange={handleSubjectSelect}>
+                          <option value="">Select Subject</option>
+                          {subjectCategories.map(category => (
+                            <optgroup key={category.id} label={category.name}>
+                              {category.subjects.map(subject => (
+                                !selectedSubjects.includes(subject.name) && (
+                                  <option key={subject.id} value={subject.name}>{subject.name}</option>
+                                )
+                              ))}
+                            </optgroup>
+                          ))}
+                        </select>
+                        <div className="selected-subjects">
+                          {selectedSubjects.map((subject, i) => (
+                            <span key={i} className="subject-tag">
+                              {subject}
+                              <button onClick={() => removeSubject(subject)} className="remove-subject">×</button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="form-group">
+                      <label>Year Level</label>
+                      <select name="year_level" value={form.year_level} onChange={handleChange}>
+                        <option value="">Select Year Level</option>
+                        {yearLevels.map((level, index) => (
+                          <option key={index} value={level}>{level}</option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -231,7 +287,7 @@ const Profile = () => {
                     </div>
                     <div className="info-item">
                       <span className="info-label">Bio</span>
-                      <p className="info-value">{profile.bio || 'No bio yet'}</p>
+                      <span className="info-value">{profile.bio || 'No bio yet'}</span>
                     </div>
                     <div className="info-item">
                       <span className="info-label">Birthday</span>
@@ -241,36 +297,28 @@ const Profile = () => {
                       <span className="info-label">Gender</span>
                       <span className="info-value">{profile.gender || 'Not specified'}</span>
                     </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Skills Section */}
-              <div className="profile-section">
-                <h3>Skills & Expertise</h3>
-                {editMode ? (
-                  <div className="form-group">
-                    <label>Skills (comma separated)</label>
-                    <input 
-                      type="text" 
-                      name="skills" 
-                      value={form.skills} 
-                      onChange={handleChange} 
-                    />
-                  </div>
-                ) : (
-                  <div className="skills-display">
-                    {profile.skills ? (
-                      profile.skills.split(',').map((skill, i) => (
-                        <span key={i} className="skill-tag">{skill.trim()}</span>
-                      ))
-                    ) : (
-                      <p className="no-skills">No skills added yet</p>
+                    <div className="info-item">
+                      <span className="info-label">Role</span>
+                      <span className="info-value">{profile.role}</span>
+                    </div>
+                    {(profile.role !== 'Skill Learner') && (
+                      <div className="info-item">
+                        <span className="info-label">Subjects</span>
+                        <div className="info-value">
+                          {profile.subject ? profile.subject.split(',').map((subj, i) => (
+                            <span key={i} className="subject-tag">{subj.trim()}</span>
+                          )) : 'Not specified'}
+                        </div>
+                      </div>
                     )}
+                    <div className="info-item">
+                      <span className="info-label">Year Level</span>
+                      <span className="info-value">{profile.year_level || 'Not specified'}</span>
+                    </div>
                   </div>
                 )}
               </div>
-
+              
               {/* Contact Section */}
               <div className="profile-section">
                 <h3><FiLink /> Contact Information</h3>
@@ -278,20 +326,20 @@ const Profile = () => {
                   <div className="form-grid">
                     <div className="form-group">
                       <label>Social Links (one per line)</label>
-                      <textarea 
-                        name="social_links" 
-                        value={form.social_links} 
-                        onChange={handleChange} 
-                        rows="3" 
+                      <textarea
+                        name="social_links"
+                        value={form.social_links}
+                        onChange={handleChange}
+                        rows="3"
                       />
                     </div>
                     <div className="form-group">
                       <label><FiPhone /> Contact Number</label>
-                      <input 
-                        type="text" 
-                        name="contact_number" 
-                        value={form.contact_number} 
-                        onChange={handleChange} 
+                      <input
+                        type="text"
+                        name="contact_number"
+                        value={form.contact_number}
+                        onChange={handleChange}
                       />
                     </div>
                   </div>
@@ -317,14 +365,84 @@ const Profile = () => {
                 )}
               </div>
             </div>
-          ) : (
-            <div className="loading-state">
-              <div className="spinner"></div>
-              <p>Loading your profile...</p>
-            </div>
           )}
         </div>
       </div>
+      {viewAs && profile && (
+        <div className="modal-overlay" onClick={() => setViewAs(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" onClick={() => setViewAs(false)}>×</button>
+
+            <div className="modal-avatar-container">
+              {profile.avatar && (
+                <img
+                  src={`http://localhost:5000/uploads/${profile.avatar}`}
+                  alt="Avatar"
+                  className="modal-avatar"
+                />
+              )}
+              <div className="modal-rating">⭐ {profile.rating || 'N/A'}</div>
+            </div>
+
+            <div className="modal-main">
+              <h3>{profile.username}</h3>
+              <p className="modal-role">{profile.role || 'N/A'}</p>
+              <p className="modal-bio">{profile.bio || 'No bio yet'}</p>
+
+              <div className="modal-section">
+                <h4>Subject Expertise</h4>
+                {profile.subject && profile.role !== 'Skill Learner' ? (
+                  <div className="subject-tags">
+                    {profile.subject.split(',').map((subject, i) => (
+                      <span key={i} className="subject-tag">{subject.trim()}</span>
+                    ))}
+                  </div>
+                ) : <p>N/A</p>}
+              </div>
+
+              <div className="modal-section">
+                <h4>Year Level</h4>
+                <p>{profile.year_level || 'N/A'}</p>
+              </div>
+
+              {profile.social_links && (
+                <div className="modal-section">
+                  <h4>Social Links</h4>
+                  <div className="modal-social-links">
+                    {profile.social_links.split('\n').map((link, i) => (
+                      <a
+                        key={i}
+                        href={link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="modal-social-link"
+                      >
+                        <span className="link-icon">🔗</span>
+                        <span className="link-text">{link}</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="modal-section">
+                <h4>Contact</h4>
+                <p className="contact-info">
+                  {profile.contact_number ? (
+                    <a href={`tel:${profile.contact_number}`} className="contact-link">
+                      📞 {profile.contact_number}
+                    </a>
+                  ) : 'Not provided'}
+                </p>
+              </div>
+
+              <div className="modal-actions">
+                <button className="schedule-btn">📅 Request Session</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

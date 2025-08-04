@@ -37,6 +37,7 @@ router.get('/', authenticateToken, (req, res) => {
   });
 });
 
+// SETUP profile (insert or update)
 router.post('/setup', upload.single('avatar'), (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ message: 'No token provided' });
@@ -46,22 +47,22 @@ router.post('/setup', upload.single('avatar'), (req, res) => {
 
     const {
       username, skills, bio, birthday,
-      gender, social_links, contact_number
+      gender, social_links, contact_number,
+      subject, year_level, role
     } = req.body;
 
     const avatar = req.file?.filename;
 
-    // Check if user profile already exists
     const checkSql = 'SELECT * FROM user_profiles WHERE user_id = ?';
     db.query(checkSql, [decoded.id], (err, result) => {
       if (err) return res.status(500).json({ error: err });
 
       if (result.length > 0) {
-        // 🛠 Update existing profile
+        // Update
         let sql = `
           UPDATE user_profiles 
-          SET username=?, skills=?, bio=?, birthday=?, gender=?, social_links=?, contact_number=?`;
-        const values = [username, skills, bio, birthday, gender, social_links, contact_number];
+          SET username=?, skills=?, bio=?, birthday=?, gender=?, social_links=?, contact_number=?, subject=?, year_level=?, role=?`;
+        const values = [username, skills, bio, birthday, gender, social_links, contact_number, subject, year_level, role];
 
         if (avatar) {
           sql += `, avatar=?`;
@@ -77,14 +78,16 @@ router.post('/setup', upload.single('avatar'), (req, res) => {
         });
 
       } else {
-        // ➕ Insert new profile
+        // Insert
         const sql = `
           INSERT INTO user_profiles 
-          (user_id, username, skills, bio, birthday, gender, social_links, contact_number, avatar) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          (user_id, username, skills, bio, birthday, gender, social_links, contact_number, avatar, subject, year_level, role) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
         db.query(sql, [
           decoded.id, username, skills, bio, birthday,
-          gender, social_links, contact_number, avatar || null
+          gender, social_links, contact_number,
+          avatar || null, subject, year_level, role
         ], (err3) => {
           if (err3) return res.status(500).json({ error: err3 });
           res.json({ message: 'Profile created' });
@@ -119,24 +122,20 @@ router.post('/avatar', authenticateToken, upload.single('avatar'), (req, res) =>
   });
 });
 
-router.get('/others', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ message: 'No token provided' });
+// GET other users (Skill Sharers or Both only)
+router.get('/others', authenticateToken, (req, res) => {
+  const sql = `
+    SELECT user_id AS id, username, skills, bio, contact_number, avatar, subject, year_level, role, social_links
+    FROM user_profiles 
+    WHERE user_id != ? 
+      AND (role = 'Skill Sharer' OR role = 'Skill Sharer & Learner')`;
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) return res.status(403).json({ message: 'Invalid token' });
-
-    const sql = `
-      SELECT user_id AS id, username, skills, bio, contact_number, avatar 
-      FROM user_profiles 
-      WHERE user_id != ?
-    `;
-    db.query(sql, [decoded.id], (err, result) => {
-      if (err) return res.status(500).json({ error: err });
-      res.json(result);
-    });
+  db.query(sql, [req.user.id], (err, result) => {
+    if (err) return res.status(500).json({ error: err });
+    res.json(result);
   });
 });
+
 
 
 
@@ -195,4 +194,39 @@ router.put('/:id/archive', (req, res) => {
 });
 //------------------- End Notification ---------------------------//
 
+//------------------- Subjects ---------------------------//
+router.get('/subjects', (req, res) => {
+  const sql = `
+    SELECT c.id as category_id, c.name as category_name, 
+           s.id as subject_id, s.name as subject_name
+    FROM subject_categories c
+    LEFT JOIN subjects s ON c.id = s.category_id
+    ORDER BY c.name, s.name`;
+  
+  db.query(sql, (err, results) => {
+    if (err) return res.status(500).json({ error: err });
+    
+    // Group by category
+    const categories = {};
+    results.forEach(row => {
+      if (!categories[row.category_id]) {
+        categories[row.category_id] = {
+          id: row.category_id,
+          name: row.category_name,
+          subjects: []
+        };
+      }
+      if (row.subject_id) {
+        categories[row.category_id].subjects.push({
+          id: row.subject_id,
+          name: row.subject_name
+        });
+      }
+    });
+    
+    res.json(Object.values(categories));
+  });
+});
+
+//------------------- End Subjects ---------------------------//
 module.exports = router;
